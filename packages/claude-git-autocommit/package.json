@@ -1,0 +1,41 @@
+{
+  "name": "claude-git-autocommit",
+  "version": "2.0.0",
+  "description": "Claude Code adapter for coding-git-autocommit",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "claude-git-autocommit": "./install.js"
+  },
+  "files": [
+    "install.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "coding-git-autocommit": "0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reachdevel/coding-git-autocommit.git",
+    "directory": "packages/claude-git-autocommit"
+  },
+  "homepage": "https://github.com/reachdevel/coding-git-autocommit#readme",
+  "bugs": {
+    "url": "https://github.com/reachdevel/coding-git-autocommit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "git",
+    "autocommit",
+    "claude-code",
+    "opencode",
+    "codex",
+    "conventional-commits"
+  ]
+}

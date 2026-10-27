@@ -1,0 +1,12 @@
+{
+  "name": "git-autocommit",
+  "version": "0.1.0",
+  "description": "Shared, model-free Git autocommit engine with a Claude Code adapter",
+  "author": {
+    "name": "Levent Kurt"
+  },
+  "license": "MIT",
+  "hooks": "./hooks/claude.json",
+  "repository": "https://github.com/reachdevel/coding-git-autocommit",
+  "homepage": "https://github.com/reachdevel/coding-git-autocommit"
+}

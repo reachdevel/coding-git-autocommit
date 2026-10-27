@@ -1,0 +1,62 @@
+{
+  "name": "coding-git-autocommit",
+  "version": "0.1.0",
+  "description": "Shared, model-free Git autocommit engine for Claude Code, OpenCode, and Codex",
+  "author": "Levent Kurt",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
+    },
+    "./opencode": {
+      "types": "./dist/adapters/opencode.d.ts",
+      "default": "./dist/adapters/opencode.js"
+    }
+  },
+  "bin": {
+    "coding-git-autocommit": "./dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "schema.json",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reachdevel/coding-git-autocommit.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/reachdevel/coding-git-autocommit#readme",
+  "bugs": {
+    "url": "https://github.com/reachdevel/coding-git-autocommit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "git",
+    "autocommit",
+    "claude-code",
+    "opencode",
+    "codex",
+    "conventional-commits"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "coding-git-autocommit-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "node scripts/sync-metadata.mjs && npm run build --workspace coding-git-autocommit",
+    "typecheck": "npm run typecheck --workspace coding-git-autocommit",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "check": "npm run typecheck && npm test && npm run check:packages",
+    "check:packages": "node scripts/check-packages.mjs",
+    "release:publish": "node scripts/publish.mjs"
+  },
+  "devDependencies": {
+    "@opencode/plugin": "2.0.31",
+    "@types/node": "22.19.17",
+    "typescript": "5.9.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reachdevel/coding-git-autocommit.git"
+  }
+}

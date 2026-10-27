@@ -1,0 +1,11 @@
+node_modules/
+*.tgz
+.npm-cache/
+coverage/
+.DS_Store
+.npmrc
+.env
+.env.*
+*.log
+.code-review-graph/
+# dist/ is shipped for Git-installed hook plugins; rebuild it with src/ changes.

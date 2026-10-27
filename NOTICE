@@ -1,0 +1,11 @@
+Coding Git Autocommit derives its deterministic commit-message rules and host
+adapters from these MIT-licensed projects by Levent Kurt:
+
+  claude-git-autocommit 1.1.0
+  https://github.com/reachdevel/claude-git-autocommit
+
+  opencode-git-autocommit 3.0.1
+  https://github.com/reachdevel/opencode-git-autocommit
+
+The shared engine and adapter separation are maintained in this repository.
+Original copyright and license terms are retained in LICENSE.

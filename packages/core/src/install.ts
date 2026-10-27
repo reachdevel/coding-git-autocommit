@@ -1,0 +1,144 @@
+import { chmod, cp, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import type { Agent } from "./types.js";
+
+export interface InstallOptions {
+  agent: Agent;
+  scope: "user" | "project";
+  cwd?: string;
+  home?: string;
+  dryRun?: boolean;
+  replaceLegacy?: boolean;
+}
+
+export interface InstallPlan {
+  agent: Agent;
+  target: string;
+  runtime: string;
+  events: string[];
+  changed: boolean;
+  dryRun: boolean;
+  notes: string[];
+}
+
+type JsonObject = Record<string, unknown>;
+
+function isObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function optionalText(file: string): Promise<string | undefined> {
+  try { return await readFile(file, "utf8"); }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+}
+
+function parseSettings(text: string | undefined, file: string): JsonObject {
+  const value: unknown = text === undefined ? {} : JSON.parse(text);
+  if (!isObject(value)) throw new Error(`${file} must contain a JSON object`);
+  return value;
+}
+
+export function shellQuote(value: string): string {
+  return "'" + value.replace(/'/g, "'\\''") + "'";
+}
+
+function isManaged(command: unknown): boolean {
+  return typeof command === "string" && command.includes("coding-git-autocommit/runtime/") && /\bhook (claude|codex)\b/.test(command);
+}
+
+function isLegacy(command: unknown, agent: Agent): boolean {
+  return typeof command === "string" && agent === "claude" && (
+    command.includes("claude-git-autocommit") || command.includes("${CLAUDE_PLUGIN_ROOT}/dist/commit-from-diff.mjs")
+  );
+}
+
+function patchHooks(settings: JsonObject, agent: Agent, events: string[], command: string, replaceLegacy: boolean): void {
+  if (settings.hooks === undefined) settings.hooks = {};
+  if (!isObject(settings.hooks)) throw new Error("Existing hooks must be an object");
+  for (const [event, value] of Object.entries(settings.hooks)) {
+    if (!Array.isArray(value)) throw new Error(`hooks.${event} must be an array`);
+    const groups: unknown[] = [];
+    for (const group of value) {
+      if (!isObject(group) || !Array.isArray(group.hooks)) throw new Error(`Invalid hook group in ${event}`);
+      const hooks = group.hooks.filter(hook => !isObject(hook) || !(
+        (isManaged(hook.command) && (hook.command as string).endsWith(`hook ${agent}`)) ||
+        (replaceLegacy && isLegacy(hook.command, agent))
+      ));
+      if (hooks.length) groups.push({ ...group, hooks });
+    }
+    settings.hooks[event] = groups;
+  }
+  for (const event of events) {
+    const groups = settings.hooks[event] ?? [];
+    if (!Array.isArray(groups)) throw new Error(`hooks.${event} must be an array`);
+    groups.push({ hooks: [{ type: "command", command, timeout: 180 }] });
+    settings.hooks[event] = groups;
+  }
+}
+
+async function writeWithBackup(file: string, content: string, previous?: string): Promise<void> {
+  await mkdir(dirname(file), { recursive: true });
+  const existingMode = previous === undefined ? 0o600 : (await stat(file)).mode & 0o777;
+  if (previous !== undefined) await writeFile(`${file}.backup-${Date.now()}-${randomUUID()}`, previous, { mode: existingMode, flag: "wx" });
+  const temporary = `${file}.${randomUUID()}.tmp`;
+  await writeFile(temporary, content, { mode: existingMode });
+  await rename(temporary, file);
+}
+
+/** Copies all relative imports, so npx cache eviction cannot break installed hooks. */
+export async function install(options: InstallOptions): Promise<InstallPlan> {
+  const cwd = resolve(options.cwd ?? process.cwd());
+  const home = options.home ?? homedir();
+  const hostName = options.agent === "opencode" ? ".opencode" : options.agent === "claude" ? ".claude" : ".codex";
+  let hostDirectory = join(options.scope === "user" ? home : cwd, hostName);
+  if (options.scope === "user") {
+    if (options.agent === "opencode") hostDirectory = join(
+      (!options.home && process.env.XDG_CONFIG_HOME) || join(home, ".config"), "opencode");
+    if (!options.home && options.agent === "codex" && process.env.CODEX_HOME) hostDirectory = resolve(process.env.CODEX_HOME);
+    if (!options.home && options.agent === "claude" && process.env.CLAUDE_CONFIG_DIR) hostDirectory = resolve(process.env.CLAUDE_CONFIG_DIR);
+  }
+  const runtime = join(hostDirectory, "coding-git-autocommit", "runtime");
+  const target = join(hostDirectory, options.agent === "opencode" ? "plugins/coding-git-autocommit.js"
+    : options.agent === "claude" ? "settings.json" : "hooks.json");
+  const previous = await optionalText(target);
+  const events = options.agent === "claude" ? ["Stop", "StopFailure"] : options.agent === "codex" ? ["Stop"] : [
+    "session.execution.succeeded", "session.execution.failed", "session.execution.interrupted",
+  ];
+  let content: string;
+  if (options.agent === "opencode") {
+    // @opencode/plugin 2.0.31's Plugin.define returns this object unchanged.
+    // A local plugin can use the same shape without installing SDK dependencies.
+    content = [
+      '// Generated by coding-git-autocommit. Requires the OpenCode v2 plugin API.',
+      'import { createOpenCodeSetup } from "../coding-git-autocommit/runtime/adapters/opencode.js";',
+      'export default { id: "git-autocommit", setup: createOpenCodeSetup() };', "",
+    ].join("\n");
+    if (previous !== undefined && !previous.includes("Generated by coding-git-autocommit")) {
+      throw new Error(`Refusing to overwrite unmanaged plugin: ${target}`);
+    }
+  } else {
+    const settings = parseSettings(previous, target);
+    const command = `${shellQuote(process.execPath)} ${shellQuote(join(runtime, "bin.js"))} hook ${options.agent}`;
+    patchHooks(settings, options.agent, events, command, options.replaceLegacy ?? false);
+    content = JSON.stringify(settings, null, 2) + "\n";
+  }
+  const notes = options.agent === "codex" ? ["Restart Codex and review/trust these hooks with /hooks. Installation does not grant trust."]
+    : options.agent === "opencode" ? ["The local adapter uses the OpenCode v2 plugin shape and needs no external runtime dependencies."] : [];
+  notes.push("Disable the old standalone hook or plugin before enabling this adapter; existing external installations are not removed automatically.");
+  const plan: InstallPlan = { agent: options.agent, target, runtime, events, changed: previous !== content,
+    dryRun: options.dryRun ?? false, notes };
+  if (options.dryRun) return plan;
+  await mkdir(runtime, { recursive: true });
+  const source = dirname(fileURLToPath(import.meta.url));
+  await cp(source, runtime, { recursive: true });
+  await writeFile(join(runtime, "package.json"), '{"private":true,"type":"module"}\n');
+  await chmod(join(runtime, "bin.js"), 0o755);
+  if (plan.changed) await writeWithBackup(target, content, previous);
+  return plan;
+}
