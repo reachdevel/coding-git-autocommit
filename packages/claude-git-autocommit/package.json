@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "bin": {
-    "claude-git-autocommit": "./install.js"
+    "claude-git-autocommit": "install.js"
   },
   "files": [
     "install.js",

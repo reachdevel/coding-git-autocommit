@@ -25,7 +25,7 @@
     }
   },
   "bin": {
-    "coding-git-autocommit": "./dist/bin.js"
+    "coding-git-autocommit": "dist/bin.js"
   },
   "files": [
     "dist",

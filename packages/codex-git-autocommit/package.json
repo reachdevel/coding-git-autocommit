@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "bin": {
-    "codex-git-autocommit": "./install.js"
+    "codex-git-autocommit": "install.js"
   },
   "files": [
     "install.js",
