@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Validate the standalone OpenCode entry point on Node 20 without loading the
+  SDK's optional Node 22 host-loader API. Node 22+ still checks that SDK loader.
+- Retain the single-package architecture and all three internal integrations.
+
 ## 0.2.0
 
 - Make coding-git-autocommit the sole standalone package, with the shared engine,

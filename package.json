@@ -1,6 +1,6 @@
 {
   "name": "coding-git-autocommit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Standalone, model-free Git autocommit for Claude Code, OpenCode, and Codex",
   "author": "Levent Kurt",
   "license": "MIT",

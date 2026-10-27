@@ -3,8 +3,8 @@ import { execFileSync } from "node:child_process";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { Host } from "@opencode/plugin/host";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import * as nodeModule from "node:module";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const temporary = await mkdtemp(join(tmpdir(), "coding-autocommit-package-"));
@@ -30,9 +30,14 @@ try {
   npm(["install", "--offline", "--ignore-scripts", "--no-audit", "--no-fund", join(temporary, pack.filename)], temporary);
   const installed = await readdir(join(temporary, "node_modules"));
   assert.deepEqual(installed.filter(name => !name.startsWith(".")).sort(), ["coding-git-autocommit"]);
-  const server = Host.resolve({ name: "coding-git-autocommit", directory: temporary }).server;
-  assert(server, "OpenCode must discover the package's bundled server entry point");
-  const loaded = await Host.load(server);
+  const resolver = nodeModule.createRequire(join(temporary, "package.json"));
+  const server = resolver.resolve("coding-git-autocommit/server");
+  assert(server.endsWith("dist/adapters/opencode-plugin.js"));
+  // The SDK's optional Node host loader needs Node 22.15+; the shipped plugin
+  // and engine do not import it and also work on the supported Node 20 floor.
+  const loaded = typeof nodeModule.registerHooks === "function"
+    ? await (await import("@opencode/plugin/host")).Host.load(server)
+    : await import(pathToFileURL(server).href);
   assert.equal(loaded.default.id, "git-autocommit");
   assert.equal(typeof loaded.default.setup, "function");
   const bin = join(temporary, "node_modules/.bin/coding-git-autocommit");
