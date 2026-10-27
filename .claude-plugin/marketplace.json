@@ -1,8 +1,17 @@
 {
   "name": "coding-git-autocommit",
-  "metadata": { "description": "Shared Git autocommit engine and coding-agent adapters" },
-  "owner": { "name": "Levent Kurt" },
+  "metadata": {
+    "description": "Shared Git autocommit engine and coding-agent adapters"
+  },
+  "owner": {
+    "name": "Levent Kurt"
+  },
   "plugins": [
-    { "name": "git-autocommit", "source": "./", "version": "0.1.0", "description": "Model-free Git autocommit for Claude Code" }
+    {
+      "name": "git-autocommit",
+      "source": "./",
+      "version": "0.1.1",
+      "description": "Model-free Git autocommit for Claude Code"
+    }
   ]
 }

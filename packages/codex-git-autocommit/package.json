@@ -1,6 +1,6 @@
 {
   "name": "codex-git-autocommit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Codex adapter for coding-git-autocommit",
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "coding-git-autocommit": "0.1.0"
+    "coding-git-autocommit": "0.1.1"
   },
   "repository": {
     "type": "git",
