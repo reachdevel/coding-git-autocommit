@@ -1,7 +1,7 @@
 {
   "description": "Commit checkpoints on Claude Code Stop and StopFailure events",
   "hooks": {
-    "Stop": [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/packages/core/dist/bin.js\" hook claude", "timeout": 180 }] }],
-    "StopFailure": [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/packages/core/dist/bin.js\" hook claude", "timeout": 180 }] }]
+    "Stop": [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/bin.js\" hook claude", "timeout": 180 }] }],
+    "StopFailure": [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/bin.js\" hook claude", "timeout": 180 }] }]
   }
 }

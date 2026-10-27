@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const project = fileURLToPath(new URL("../", import.meta.url));
-export const bin = resolve(project, "packages/core/dist/bin.js");
+export const bin = resolve(project, "dist/bin.js");
 
 export function git(cwd, ...args) {
   return execFileSync("git", ["-C", cwd, ...args], {

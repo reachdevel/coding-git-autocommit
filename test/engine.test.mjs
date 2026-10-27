@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { chmod, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { autoCommit, messageFromChanges, parseChanges } from "../packages/core/dist/index.js";
+import { autoCommit, messageFromChanges, parseChanges } from "../dist/index.js";
 import { fixture, git, command, bin } from "./helpers.mjs";
 
 async function repo(t, options) {

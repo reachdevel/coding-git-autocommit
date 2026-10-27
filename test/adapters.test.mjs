@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
-import { createOpenCodeSetup } from "../packages/core/dist/adapters/opencode.js";
-import { runHook } from "../packages/core/dist/adapters/hooks.js";
+import { createOpenCodeSetup } from "../dist/adapters/opencode.js";
+import { runHook } from "../dist/adapters/hooks.js";
 import { fixture, git, command, bin } from "./helpers.mjs";
 
 test("hook adapters reject invalid input, unsupported events, planning, and continuations", async t => {
@@ -66,7 +66,7 @@ test("OpenCode v2 maps terminal events, preserves root-session metadata, and uns
 });
 
 test("OpenCode SDK accepts the exported plugin adapter", async () => {
-  const { default: plugin, GitAutocommitPlugin } = await import("opencode-git-autocommit");
+  const { default: plugin, GitAutocommitPlugin } = await import("../dist/index.js");
   const { Plugin } = await import("@opencode/plugin");
   assert.equal(plugin, GitAutocommitPlugin);
   assert.equal(Plugin.define(plugin), plugin);

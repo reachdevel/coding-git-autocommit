@@ -1,6 +1,6 @@
 {
   "name": "git-autocommit",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Shared, model-free Git autocommit engine with a Codex Stop hook",
   "hooks": "./hooks/codex.json",
   "interface": {

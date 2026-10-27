@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { install } from "../packages/core/dist/install.js";
+import { install } from "../dist/install.js";
 import { fixture, git } from "./helpers.mjs";
 
 async function setup(t) {

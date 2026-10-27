@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0
+
+- Make coding-git-autocommit the sole standalone package, with the shared engine,
+  CLI, and Claude Code, OpenCode, and Codex adapters in src/ and dist/.
+- Remove all three compatibility packages and npm workspaces.
+- Export the bundled OpenCode v2 plugin directly from coding-git-autocommit and
+  coding-git-autocommit/opencode; the root also retains named engine exports.
+- Publish only coding-git-autocommit from the trusted GitHub workflow.
+- Document migration from the deprecated predecessor package names.
+- Verify all three integrations from a single installed tarball with no runtime
+  dependencies or predecessor packages present.
+
 ## 0.1.1
 
 - Consolidate Claude Code and OpenCode Git behavior in one model-free engine.

@@ -3,36 +3,38 @@
 One deterministic Git autocommit engine for Claude Code, OpenCode v2, and Codex.
 Commit messages come from the staged diff, with no model calls or API costs.
 
-This repository is a consolidation of
-[claude-git-autocommit](https://github.com/reachdevel/claude-git-autocommit) and
-[opencode-git-autocommit](https://github.com/reachdevel/opencode-git-autocommit).
-It contains the unscoped npm package
-[`coding-git-autocommit`](https://www.npmjs.com/package/coding-git-autocommit)
-and three host adapters, maintained at
+The only package to install is
+[`coding-git-autocommit`](https://www.npmjs.com/package/coding-git-autocommit).
+The shared Git engine and all three host integrations live inside this package.
+It has no third-party runtime dependencies and does not import or execute any
+predecessor package. Source:
 [`reachdevel/coding-git-autocommit`](https://github.com/reachdevel/coding-git-autocommit).
 
 ## Structure
 
 ```text
-packages/
-  core/                       coding-git-autocommit: engine, policy, CLI, adapters
-  claude-git-autocommit/       existing npm name; forwards installation to core
-  opencode-git-autocommit/     existing npm name; OpenCode v2 plugin entry point
-  codex-git-autocommit/        Codex hook installer wrapper
-hooks/                        separate Claude and Codex native plugin hooks
-.claude-plugin/               Claude plugin and marketplace
-.codex-plugin/                Codex plugin manifest
-.agents/plugins/              Codex local marketplace
-test/                         integration tests using disposable Git repositories
+src/
+  engine.ts                 shared Git operations, locking, and commit messages
+  cli.ts                    installation and manual-commit commands
+  adapters/
+    hooks.ts                Claude Code and Codex lifecycle handling
+    opencode.ts             OpenCode event handling
+    opencode-plugin.ts      bundled native OpenCode plugin entry point
+dist/                       compiled standalone runtime
+hooks/                      separate Claude and Codex native plugin hooks
+.claude-plugin/             Claude plugin and marketplace
+.codex-plugin/              Codex plugin manifest
+.agents/plugins/            Codex marketplace
+test/                       disposable-repository integration tests
+package.json                the sole npm package
 ```
 
-The core and adapters have no third-party runtime dependencies. The OpenCode SDK
-is a development dependency used to verify the adapter's actual v2 type contract.
-Both OpenCode entry points export the v2 plugin object without an SDK import.
+The OpenCode SDK is a development dependency used to check compatibility. The
+published OpenCode plugin, like the other integrations, needs no SDK installation.
 
 ## Development
 
-Requires Node.js 20+, npm with workspace support, and Git. POSIX shells are
+Requires Node.js 20+, npm, and Git. POSIX shells are
 required for the generated Claude/Codex hook commands; Windows users need WSL.
 
 ```sh
@@ -41,9 +43,10 @@ npm run check
 ```
 
 `npm run check` typechecks, builds, tests real Git behavior and hook adapters,
-checks the actual OpenCode SDK contract, and installs all four npm tarballs in
-an isolated temporary directory. Dependency lifecycle scripts are not required;
-`npm ci --ignore-scripts` is also supported. Compiled `packages/core/dist/` is
+checks the actual OpenCode SDK contract, and installs only the standalone tarball
+in an isolated temporary directory. That installed package must create real Git
+commits through all three host integrations without any predecessor package. Dependency lifecycle scripts are not required;
+`npm ci --ignore-scripts` is also supported. Compiled `dist/` is
 included so Git-installed native plugins can run without a build step.
 
 ## Install from npm
@@ -57,16 +60,14 @@ npx coding-git-autocommit install claude --user
 npx coding-git-autocommit install opencode --project
 ```
 
-The host-specific installer names remain available:
+For OpenCode v2's native npm-plugin route, the same package exports the plugin
+directly:
 
 ```sh
-npx claude-git-autocommit --project --dry-run
-npx codex-git-autocommit --project --dry-run
+opencode plugin add coding-git-autocommit@latest
 ```
 
-For OpenCode's npm plugin route, use `opencode-git-autocommit` in its plugin
-configuration or run `opencode plugin add opencode-git-autocommit@latest` on
-OpenCode v2. Use either this npm route or the standalone local-plugin installer.
+Use either this native npm route or the standalone local-plugin installer above.
 
 ## Installation from a checkout
 
@@ -74,10 +75,10 @@ Building the project does not activate any integration. Choose the agent and
 scope explicitly. Preview first with `--dry-run`:
 
 ```sh
-node packages/core/dist/bin.js install codex --project --dry-run
-node packages/core/dist/bin.js install codex --project
-node packages/core/dist/bin.js install claude --user
-node packages/core/dist/bin.js install opencode --project
+node dist/bin.js install codex --project --dry-run
+node dist/bin.js install codex --project
+node dist/bin.js install claude --user
+node dist/bin.js install opencode --project
 ```
 
 Run project-scoped commands from the project root. The installer copies the
@@ -124,24 +125,28 @@ Restart the agent. Codex additionally requires native hook trust review.
 Only the selected host's hook file loads. Native plugin paths use the host's
 plugin-root variable; neither native plugin imports the OpenCode SDK.
 
-## Compatibility packages and migration
+## Migration from the old packages
 
-The workspace retains the existing `claude-git-autocommit` and
-`opencode-git-autocommit` package names and adds `codex-git-autocommit`.
-The Claude and Codex wrapper CLIs accept the familiar
-`--user`, `--project`, and `--dry-run` options. OpenCode keeps its default and
-named `GitAutocommitPlugin` exports and plugin id `git-autocommit`.
+`claude-git-autocommit`, `opencode-git-autocommit`, and `codex-git-autocommit` are
+superseded by this single package. They are not needed for any integration and
+are no longer published from this repository. Existing installed versions remain
+available for compatibility while users migrate.
 
-The wrapper releases pin their shared-engine dependency. All packages link to
-this monorepo, while retaining their existing unscoped package names. See
-[CHANGELOG.md](https://github.com/reachdevel/coding-git-autocommit/blob/main/CHANGELOG.md)
-for the adapter major-version migration.
+Disable the previous native plugin, standalone hook, or OpenCode package entry
+before installing the replacement. For example, remove `opencode-git-autocommit`
+from OpenCode's plugin configuration, then add `coding-git-autocommit` or use
+`npx coding-git-autocommit install opencode --project`.
 
-Before migrating, disable the old native plugin, standalone hook, or OpenCode
-package entry. The new installer leaves external integrations alone by default.
 For recognized old Claude standalone hook commands in the **same settings
 file**, `--replace-legacy` removes those commands while retaining unrelated
-hooks. It cannot disable a separately installed plugin or another scope.
+hooks:
+
+```sh
+npx coding-git-autocommit install claude --project --replace-legacy
+```
+
+This does not disable a separately installed plugin or another scope. The
+installer does not change unrelated agent settings.
 
 ## Shared configuration
 
@@ -229,7 +234,7 @@ you have already staged.
   command returns a failing exit code for engine errors:
 
 ```sh
-node packages/core/dist/bin.js commit codex --cwd /path/to/project --staged --respect-hooks
+node dist/bin.js commit codex --cwd /path/to/project --staged --respect-hooks
 ```
 
 ## License
@@ -238,19 +243,16 @@ MIT. Original copyright is preserved; see [NOTICE](NOTICE) for provenance.
 
 ## Releases
 
-`.github/workflows/publish.yml` publishes all four packages in dependency order
-from GitHub-hosted runners with npm OIDC trusted publishing. There is no npm
-publish token in the repository. The workflow runs the full verification suite
-and checks that generated build artifacts match the commit before publishing.
+`.github/workflows/publish.yml` publishes only `coding-git-autocommit` from
+GitHub-hosted runners using the existing npm OIDC trusted-publisher connection.
+The workflow runs the full verification suite and checks committed build
+artifacts before publishing. No npm publish token is stored in the repository.
 
-For a release, update the engine version, its generated CLI version, adapter
-dependency pins, and any changed adapter versions. Run `npm install
---package-lock-only --ignore-scripts`, then `npm run check`, and commit all
-metadata and generated artifacts. Push a `v<engine-version>` tag to publish.
-The workflow can also be rerun manually; already-published package versions are
-skipped, allowing recovery after a partial release.
+For a release, update the root package and native plugin manifest versions,
+refresh the lockfile with `npm install --package-lock-only --ignore-scripts`,
+and run `npm run check`. Commit the metadata and generated `dist/` artifacts,
+then push a `v<package-version>` tag. The workflow can also be rerun manually;
+an already-published version is skipped.
 
-Each package's npm trusted-publisher configuration must authorize
-`reachdevel/coding-git-autocommit`, workflow filename `publish.yml`, with direct
-publishing allowed. New package names need a one-time authenticated bootstrap
-publish before npm permits configuring that relationship.
+The npm trusted-publisher configuration authorizes
+`reachdevel/coding-git-autocommit`, workflow filename `publish.yml`.
